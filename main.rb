@@ -3,7 +3,7 @@ require "pp"
 load 'client.rb'
 
 k = "6f008302-0923-4a95-bbc7-f41c9cd3cacc"
-debug = false
+debug = true
 
 def classify(cards)
     count = Array.new(13)
@@ -127,7 +127,7 @@ def get_decision(data)
         type = classify(data["hand"])
         if type == 1
             puts "-----we gots a pair on the ante-----"
-            if data["current_bet"] <= data["stack"]/10
+            if data["current_bet"]+data["call_amount"] <= data["stack"]/10
                 action = "raise"
                 amount = data["stack"]/20
             else
@@ -156,13 +156,13 @@ def get_decision(data)
             action = "raise"
             amount = data["stack"]/10
         elsif hand_type == 2
-            if data["call_amount"]+data["current_bet"] >= 100
+            if data["call_amount"]+data["current_bet"] > data["stack"]/8
                 action = "fold"
             else
                 action = "call"
             end
         elsif hand_type == 1
-            if data["call_amount"]+data["current_bet"] <= 50
+            if data["call_amount"]+data["current_bet"] <= data["stack"]/16
                 action = "call"
             else
                 action = "fold"
@@ -197,21 +197,21 @@ def dumb_poker_player(key, d)
     turn_data = JSON.parse(response)
 
     # debugging
-    if d
-        turn_data = { "your_turn"=>true, 
-        	"initial_stack"=>500, 
-        	"stack"=>450, 
-        	"current_bet"=>50,
-        	"call_amount"=>10,
-        	"hand"=>["KS", "QD"],
-        	"community_cards"=>["JS", "TC", "9H", "KD", "QS"], 
-        	"betting_phase"=>"showdown",
-        	"players_at_table"=>{ },
-        	"total_players_remaining"=>12,
-        	"table_id"=>4,
-        	"round_id"=>12
-        }
-    end
+    # if d
+    #     turn_data = { "your_turn"=>true, 
+    #     	"initial_stack"=>500, 
+    #     	"stack"=>450, 
+    #     	"current_bet"=>50,
+    #     	"call_amount"=>20,
+    #     	"hand"=>["KS", "QD"],
+    #     	"community_cards"=>["JS", "TC", "9H", "KD", "QS"], 
+    #     	"betting_phase"=>"deal",
+    #     	"players_at_table"=>{ },
+    #     	"total_players_remaining"=>12,
+    #     	"table_id"=>4,
+    #     	"round_id"=>12
+    #     }
+    # end
 
     unless turn_data["lost_at"].nil?
     	date = turn_data["lost_at"]
