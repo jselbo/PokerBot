@@ -9,7 +9,7 @@ end
 
 
 def post(playerName,hash_data)
-	string = 'http://nolimitcodeem.com/sandbox/players/SANDBOX_KEY/action?'
+	string = "http://nolimitcodeem.com/api/players/#{playerName}/action?"
 	if hash_data["action_name"]
 		string = string + 'action_name=' + hash_data["action_name"]
 	end
@@ -17,7 +17,5 @@ def post(playerName,hash_data)
 	if hash_data["amount"]
 		string = string + '&amount=' + hash_data["amount"].to_s
 	end 
-	puts string
 	uri = URI(string)
-
 end

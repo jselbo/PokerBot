@@ -1,14 +1,35 @@
 require "json"
+require "pp"
 load 'client.rb'
 
-k = "112a7ab7-f0d4-4a01-8429-a2c8d726a9ed"
+k = "aasdf"
 
 def classify(cards)
     count = Array.new(13)
 
+    (0...13).each { |i| count[i] = 0 }
+
     cards.each do |e|
-        puts "card: #{e}"
+        first_digit = e[0]
+        if first_digit.to_i.to_s == first_digit
+            count[first_digit.to_i] += 1
+        else
+            if first_digit == "T"
+                count[9] += 1
+            elsif first_digit == "J"
+                count[10] += 1
+            elsif first_digit == "Q"
+                count[11] += 1
+            elsif first_digit == "K"
+                count[12] += 1
+            end
+        end
+
+        
     end
+    pp count
+
+    return 0
 end
 
 def get_decision(data)
@@ -19,7 +40,7 @@ def get_decision(data)
     if phase == "deal"
         amt = data["call_amount"]
         action = "call"
-    elsif phase == "flop"
+    else
         cards = data["hand"]
         table_cards = data["community_cards"]
 
@@ -61,9 +82,9 @@ def dumb_poker_player(key)
     	"stack"=>450, 
     	"current_bet"=>50,
     	"call_amount"=>10,
-    	"hand"=>["AS", "2C"],
+    	"hand"=>["KS", "KH"],
     	"community_cards"=>["AS", "2C", "TH", "KD", "QS"], 
-    	"betting_phase"=>"deal",
+    	"betting_phase"=>"showdown",
     	"players_at_table"=>{ },
     	"total_players_remaining"=>12,
     	"table_id"=>4,
@@ -86,7 +107,7 @@ def dumb_poker_player(key)
     	puts "Making decision..."
     	decision = get_decision(turn_data)
 
-    	#take_action(key, decision)
+    	post(key, decision)
     end
 
     # # Logic!!
