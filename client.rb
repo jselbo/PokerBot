@@ -1,21 +1,25 @@
 require 'net/http'
 
+def connectDaServer(playerName, d)
 
-def connectDaServer(playerName)
+	if d
+		uri = URI("http://nolimitcodeem.com/sandbox/players/river-phase-key")
+	else
+		uri = URI('http://nolimitcodeem.com/api/players/' + playerName)
+	end
 
-	uri = URI('http://nolimitcodeem.com/api/players/' + playerName)
+	
 	return Net::HTTP.get(uri)
 end
 
 
-def post(playerName,hash_data)
-	string = "http://nolimitcodeem.com/api/players/#{playerName}/action?"
-	if hash_data["action_name"]
-		string = string + 'action_name=' + hash_data["action_name"]
+def post(playerName,hash_data, d)
+	if d
+		string = "http://nolimitcodeem.com/sandbox/players/river-phase-key/action"
+	else
+		string = "http://nolimitcodeem.com/api/players/#{playerName}/action"
 	end
 
-	if hash_data["amount"]
-		string = string + '&amount=' + hash_data["amount"].to_s
-	end 
 	uri = URI(string)
+	result = Net::HTTP.post_form(uri, hash_data)
 end

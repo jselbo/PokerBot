@@ -2,8 +2,8 @@ require "json"
 require "pp"
 load 'client.rb'
 
-k = "aasdf"
-debug = true
+k = "6f008302-0923-4a95-bbc7-f41c9cd3cacc"
+debug = false
 
 def classify(cards)
     count = Array.new(13)
@@ -42,10 +42,56 @@ def classify(cards)
             return 7
         end
     end
+    
+    suit_counts = Array.new(4)
+    (0...4).each { |e| suit_counts[e] = 0 }
+    cards.each do |e|
+        second_digit = e[1]
+        if second_digit == "C"
+            suit_counts[0] += 1
+        elsif second_digit == "S"
+            suit_counts[1] += 1
+        elsif second_digit == "D"
+            suit_counts[2] += 1
+        elsif second_digit == "H"
+            suit_counts[3] += 1
+        end
+    end
+
+    flush = false
+    suit_counts.each do |e|
+        if e == 4
+            flush = true
+        end
+    end
+
+    straight = false
+    consec = 0
+    count.each do |c|
+        if c > 0
+            consec += 1
+            if consec == 5
+                straight = true
+                break
+            end
+        else
+            consec = 0
+        end
+    end
+
+    if flush and straight
+        return 8
+    end
+
     if three_of_kind > 0 && num_pairs > 0
         return 6
     end
-    
+
+    if flush
+        return 5
+    elsif straight
+        return 4
+    end
 
     if three_of_kind > 0
         return 3
@@ -59,14 +105,41 @@ def classify(cards)
     return 0
 end
 
+def string_from_hand(hand)
+    arr = ["High card",
+        "One pair",
+        "Two pair",
+        "3 of a kind",
+        "Straight",
+        "Flush",
+        "Full House",
+        "Four of a kind",
+        "Straight flush"]
+    return arr[hand]
+end
+
 def get_decision(data)
 	action = amount = nil
 
     phase = data["betting_phase"]
     puts "Phase: #{phase}"
     if phase == "deal"
-        amt = data["call_amount"]
-        action = "call"
+        type = classify(data["hand"])
+        if type == 1
+            puts "-----we gots a pair on the ante-----"
+            if data["current_bet"] <= data["stack"]/10
+                action = "raise"
+                amount = data["stack"]/20
+            else
+                action = "call"
+            end
+        else
+            if data["call_amount"] > data["stack"]/20
+                action = "fold"
+            else
+                action = "call"
+            end
+        end
     else
         cards = data["hand"]
         table_cards = data["community_cards"]
@@ -74,16 +147,36 @@ def get_decision(data)
         total_cards = cards + table_cards
 
         hand_type = classify(total_cards)
-        if hand_type > 1
+        hand_type_str = string_from_hand(hand_type)
+        puts "HAND TYPE: #{hand_type_str}"
+        if hand_type >= 6
             action = "raise"
-            amount = 20
+            amount = data["stack"]
+        elsif hand_type >= 3
+            action = "raise"
+            amount = data["stack"]/10
+        elsif hand_type == 2
+            if data["call_amount"]+data["current_bet"] >= 100
+                action = "fold"
+            else
+                action = "call"
+            end
         elsif hand_type == 1
-
+            if data["call_amount"]+data["current_bet"] <= 50
+                action = "call"
+            else
+                action = "fold"
+            end
         else
-            action = "fold"
+            if data["call_amount"] > 0
+                action = "fold"
+            else
+                action = "call"
+            end
         end
     end
 
+    puts "Amount needed to call: #{data["call_amount"]}"
     puts "action: #{action}"
     puts "amount: #{amount}"
 
@@ -98,7 +191,7 @@ def dumb_poker_player(key, d)
 
     # GET request.
     # Ask the server "What is going on?"
-    response = connectDaServer(key)
+    response = connectDaServer(key, d)
 
     # Parse the response so you can use the data.
     turn_data = JSON.parse(response)
@@ -110,8 +203,8 @@ def dumb_poker_player(key, d)
         	"stack"=>450, 
         	"current_bet"=>50,
         	"call_amount"=>10,
-        	"hand"=>["KS", "KH"],
-        	"community_cards"=>["AS", "2C", "TH", "KD", "QS"], 
+        	"hand"=>["KS", "QD"],
+        	"community_cards"=>["JS", "TC", "9H", "KD", "QS"], 
         	"betting_phase"=>"showdown",
         	"players_at_table"=>{ },
         	"total_players_remaining"=>12,
@@ -119,7 +212,6 @@ def dumb_poker_player(key, d)
         	"round_id"=>12
         }
     end
-    
 
     unless turn_data["lost_at"].nil?
     	date = turn_data["lost_at"]
@@ -130,13 +222,15 @@ def dumb_poker_player(key, d)
 
     if turn_data["your_turn"]
     	puts "Our turn!"
-    	puts "JSON dump:"
-    	puts "JSON:#{turn_data}"
+    	#puts "JSON dump:"
+    	#puts "JSON:#{turn_data}"
 
-    	puts "Making decision..."
+        
     	decision = get_decision(turn_data)
 
-    	post(key, decision)
+    	post(key, decision, d)
+
+        puts "\n"
     end
 
   end
