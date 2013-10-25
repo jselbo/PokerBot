@@ -2,8 +2,8 @@ require "json"
 require "pp"
 load 'client.rb'
 
-k = "6f008302-0923-4a95-bbc7-f41c9cd3cacc"
-debug = true
+k = "6cd42ce7-e4e1-4c2a-8397-006dd27bc7b5"
+debug = false
 
 def classify(cards)
     count = Array.new(13)
@@ -60,7 +60,7 @@ def classify(cards)
 
     flush = false
     suit_counts.each do |e|
-        if e == 4
+        if e == 5
             flush = true
         end
     end
