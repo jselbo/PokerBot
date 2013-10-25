@@ -1,9 +1,43 @@
 require "json"
+load 'client.rb'
+
+k = "112a7ab7-f0d4-4a01-8429-a2c8d726a9ed"
+
+def classify(cards)
+    count = Array.new(13)
+
+    cards.each do |e|
+        puts "card: #{e}"
+    end
+end
 
 def get_decision(data)
 	action = amount = nil
 
-	action = 
+    phase = data["betting_phase"]
+    puts "Phase: #{phase}"
+    if phase == "deal"
+        amt = data["call_amount"]
+        action = "call"
+    elsif phase == "flop"
+        cards = data["hand"]
+        table_cards = data["community_cards"]
+
+        total_cards = cards + table_cards
+
+        hand_type = classify(total_cards)
+        if hand_type > 1
+            action = "raise"
+            amount = 20
+        elsif hand_type == 1
+
+        else
+            action = "fold"
+        end
+    end
+
+    puts "action: #{action}"
+    puts "amount: #{amount}"
 
 	response = { "action_name"=>action, "amount"=>amount }
 end
@@ -19,7 +53,7 @@ def dumb_poker_player(key)
     response = connectDaServer(key)
 
     # Parse the response so you can use the data.
-    #turn_data = JSON.parse(response.body)
+    turn_data = JSON.parse(response)
 
     # debugging
     turn_data = { "your_turn"=>true, 
@@ -49,7 +83,7 @@ def dumb_poker_player(key)
     	puts "JSON dump:"
     	puts "JSON:#{turn_data}"
 
-    	puts "Making decision"
+    	puts "Making decision..."
     	decision = get_decision(turn_data)
 
     	#take_action(key, decision)
@@ -83,8 +117,6 @@ def dumb_poker_player(key)
 
   end
 end
-
-k = "HOLY BANANAS"
 
 dumb_poker_player(k)
 
